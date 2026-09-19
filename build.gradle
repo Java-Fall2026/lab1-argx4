@@ -11,7 +11,7 @@ java {
 
 application {
     // <-- впишіть свій пакет, напр. 'ua.hotel.Main'
-    mainClass = 'ua.Main'
+    mainClass = 'ua.clinic.Main'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -20,4 +20,16 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(JavaExec).configureEach {
     defaultCharacterEncoding = 'UTF-8'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs += [
+        '-Dfile.encoding=UTF-8',
+        '-Dsun.stdout.encoding=UTF-8',
+        '-Dsun.stderr.encoding=UTF-8'
+    ]
 }
