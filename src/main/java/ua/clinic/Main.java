@@ -1,9 +1,11 @@
 package ua.clinic;
 
 import ua.clinic.model.Appointment;
+import ua.clinic.model.AppointmentStatus;
 import ua.clinic.model.Doctor;
 import ua.clinic.model.MedicalRecord;
 import ua.clinic.model.Patient;
+import ua.clinic.model.Specialization;
 import ua.clinic.util.ClinicUtils;
 
 import java.time.LocalDate;
@@ -11,76 +13,71 @@ import java.time.LocalTime;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("=== 1. Створення об'єктів (фабрика та конструктор) ===");
-        Patient patient = Patient.of("ID-00142", "Іван Коваленко", LocalDate.of(1995, 5, 14));
-        Doctor doctor = Doctor.of("DOC-777", "Олена Петрівна", " cardiology ");
+        System.out.println("=== 1. Створення record-об'єкта і звернення до його компонентів ===");
+        Patient patient = new Patient("ID-00142", "Іван Коваленко", LocalDate.of(1995, 5, 14));
+        Doctor doctor = new Doctor("DOC-777", "Олена Петрівна", Specialization.CARDIOLOGY);
+        System.out.println("ID пацієнта через patient.nationalId(): " + patient.nationalId());
+        System.out.println("ПІБ пацієнта через patient.fullName(): " + patient.fullName());
+        System.out.println("Дата народження через patient.birthDate(): " + patient.birthDate());
+        System.out.println("Лікар: " + doctor.name() + " (" + doctor.specialization() + ")");
+
+        System.out.println("\n=== 2. Enum у роботі (values, власне поле, перехоплення valueOf) ===");
+        System.out.println("Перелік усіх спеціалізацій та їх коефіцієнтів ціни:");
+        for (Specialization spec : Specialization.values()) {
+            System.out.println(" - " + spec + " (коефіцієнт: " + spec.getFeeMultiplier() + ")");
+        }
+        try {
+            System.out.println("Спроба спарсити неіснуючий статус через valueOf...");
+            AppointmentStatus.valueOf("INVALID_STATUS");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Успішно перехоплено виняток для невідомого enum: " + e.getMessage());
+        }
+
+        System.out.println("\n=== 3. Обидва switch-вирази ===");
+        String department = ClinicUtils.getSpecializationDepartment(doctor.specialization());
+        System.out.println("Switch 1 (без default, локація відділення): " + department);
+
         Appointment appointment = new Appointment(
                 patient,
                 doctor,
                 LocalDate.now().plusDays(1),
                 LocalTime.of(10, 0),
                 LocalTime.of(10, 45),
-                " scheduled "
-        );
-        MedicalRecord record = new MedicalRecord("REC-9001", appointment, "Первинний огляд", 550.0);
-        System.out.println("Пацієнт (через of): " + patient);
-        System.out.println("Лікар (через of): " + doctor);
-        System.out.println("Запис (через new): " + appointment);
-        System.out.println("Медкарта (через new): " + record);
+                AppointmentStatus.SCHEDULED);
+        String actionScheduled = ClinicUtils.getNextStepInstruction(appointment.getStatus());
+        System.out.println("Switch 2 (дія для SCHEDULED): " + actionScheduled);
 
-        System.out.println("\n=== 2. Нормалізація значень ===");
-        System.out.println("Спеціалізація після нормалізації: [" + doctor.getSpecialization() + "]");
-        System.out.println("Статус запису після нормалізації: [" + appointment.getStatus() + "]");
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+        String actionCompleted = ClinicUtils.getNextStepInstruction(appointment.getStatus());
+        System.out.println("Switch 2 (дія для COMPLETED): " + actionCompleted);
 
-        System.out.println("\n=== 3. Перехоплення помилок валідації (три різні випадки) ===");
+        System.out.println(
+                "\n=== 4. Record з невалідними даними -> IllegalArgumentException з компактного конструктора ===");
         try {
-            Patient.of("   ", "Тест", LocalDate.of(2000, 1, 1));
+            new Patient("   ", "Тестовий Пацієнт", LocalDate.of(2000, 1, 1));
         } catch (IllegalArgumentException e) {
-            System.out.println("Випадок 1 (порожній ID): " + e.getMessage());
+            System.out.println("Помилка при порожньому ID: " + e.getMessage());
+        }
+        try {
+            new Patient("ID-999", "Тестовий Пацієнт", LocalDate.now().plusDays(10));
+        } catch (IllegalArgumentException e) {
+            System.out.println("Помилка при даті народження в майбутньому: " + e.getMessage());
         }
 
-        try {
-            Patient.of("ID-999", "Тест", LocalDate.now().plusDays(5));
-        } catch (IllegalArgumentException e) {
-            System.out.println("Випадок 2 (дата в майбутньому): " + e.getMessage());
-        }
+        System.out.println("\n=== 5. Два однакові record-об'єкти: equals і hashCode (згенеровані компілятором) ===");
+        Patient patientCopy = new Patient("ID-00142", "Іван Коваленко", LocalDate.of(1995, 5, 14));
+        Patient anotherPatient = new Patient("ID-99999", "Марія Сидоренко", LocalDate.of(2001, 3, 10));
 
-        try {
-            new Appointment(patient, doctor, LocalDate.now(), LocalTime.of(15, 0), LocalTime.of(14, 0), "SCHEDULED");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Випадок 3 (endTime раніше за startTime): " + e.getMessage());
-        }
+        System.out.println("patient.equals(patientCopy): " + patient.equals(patientCopy));
+        System.out.println(
+                "patient.hashCode() == patientCopy.hashCode(): " + (patient.hashCode() == patientCopy.hashCode()));
+        System.out.println("patient.equals(anotherPatient): " + patient.equals(anotherPatient));
 
-        System.out.println("\n=== 4. Зміна стану сеттером та перевірка валідації ===");
-        appointment.setStatus("COMPLETED");
-        System.out.println("Успішно змінено статус на: " + appointment.getStatus());
-        try {
-            appointment.setStatus("UNKNOWN_STATUS");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Спроба встановити некоректний статус: " + e.getMessage());
-        }
-
-        System.out.println("\n=== 5. Порівняння об'єктів (==, equals, hashCode) ===");
-        Patient samePatient = Patient.of("ID-00142", "Петро Сидоренко", LocalDate.of(1980, 1, 1));
-        Patient anotherPatient = Patient.of("ID-99999", "Марія Коваль", LocalDate.of(2001, 3, 10));
-
-        System.out.println("samePatient == patient: " + (samePatient == patient));
-        System.out.println("samePatient.equals(patient): " + samePatient.equals(patient));
-        System.out.println("Хеш-коди збігаються: " + (samePatient.hashCode() == patient.hashCode()));
-        System.out.println("anotherPatient.equals(patient): " + anotherPatient.equals(patient));
-
-        System.out.println("\n=== 6. Обчислювані методи ===");
-        System.out.println("Тривалість прийому (хв): " + ClinicUtils.durationMinutes(appointment));
-        System.out.println("Повних років пацієнта: " + ClinicUtils.patientAge(patient));
-
-        System.out.println("\n=== 7. Вивід усіх сутностей через toString() ===");
-        System.out.println(patient);
-        System.out.println(doctor);
-        System.out.println(appointment);
-        System.out.println(record);
-
-        System.out.println("\n=== 8. Демонстрація інкапсуляції ===");
-        // ua.clinic.util.ValidationHelper.requireNotNull(null, "test"); // Compilation error: ValidationHelper has package-private access
-        System.out.println("Пункт 8: прямий виклик ValidationHelper з Main не компілюється через package-private доступ.");
+        System.out.println("\n=== 6. Вивід record через згенерований toString() ===");
+        MedicalRecord medicalRecord = new MedicalRecord("REC-9001", appointment, "Первинний огляд кардіолога", 850.0);
+        System.out.println("Згенерований toString() для Patient: " + patient);
+        System.out.println("Згенерований toString() для Doctor: " + doctor);
+        System.out.println("Згенерований toString() для MedicalRecord: " + medicalRecord);
+        System.out.println("Клас Appointment (звичайний toString): " + appointment);
     }
 }
