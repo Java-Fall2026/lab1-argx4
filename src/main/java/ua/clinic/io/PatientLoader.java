@@ -41,7 +41,7 @@ public class PatientLoader {
                 try {
                     Patient patient = parseLine(line, lineNumber);
                     patients.add(patient);
-                    log.info("Line {}: loaded patient [{}]", lineNumber, patient.getNationalId());
+                    log.info("Line {}: loaded patient [{}]", lineNumber, patient.nationalId());
                 } catch (InvalidDataException e) {
                     log.warn("Line {}: skipped — {}", lineNumber, e.getMessage());
                 }

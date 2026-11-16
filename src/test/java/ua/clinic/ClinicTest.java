@@ -6,9 +6,11 @@ import ua.clinic.exception.InvalidDataException;
 import ua.clinic.io.DoctorLoader;
 import ua.clinic.io.PatientLoader;
 import ua.clinic.model.Appointment;
+import ua.clinic.model.AppointmentStatus;
 import ua.clinic.model.Doctor;
 import ua.clinic.model.MedicalRecord;
 import ua.clinic.model.Patient;
+import ua.clinic.model.Specialization;
 import ua.clinic.util.ClinicUtils;
 
 import java.io.IOException;
@@ -28,53 +30,53 @@ class ClinicTest {
     void patientCreatedWithValidData() {
         Patient patient = Patient.of("ID-001", "John Doe", LocalDate.of(1990, 1, 1));
         assertNotNull(patient);
-        assertEquals("ID-001", patient.getNationalId());
-        assertEquals("John Doe", patient.getFullName());
-        assertEquals(LocalDate.of(1990, 1, 1), patient.getBirthDate());
+        assertEquals("ID-001", patient.nationalId());
+        assertEquals("John Doe", patient.fullName());
+        assertEquals(LocalDate.of(1990, 1, 1), patient.birthDate());
     }
 
     @Test
     @DisplayName("Doctor is created with valid data")
     void doctorCreatedWithValidData() {
-        Doctor doctor = Doctor.of("DOC-100", "Jane Smith", "CARDIOLOGY");
+        Doctor doctor = Doctor.of("DOC-100", "Jane Smith", Specialization.CARDIOLOGY);
         assertNotNull(doctor);
-        assertEquals("DOC-100", doctor.getLicenseNumber());
-        assertEquals("Jane Smith", doctor.getName());
-        assertEquals("CARDIOLOGY", doctor.getSpecialization());
+        assertEquals("DOC-100", doctor.licenseNumber());
+        assertEquals("Jane Smith", doctor.name());
+        assertEquals(Specialization.CARDIOLOGY, doctor.specialization());
     }
 
     @Test
     @DisplayName("Appointment is created with valid data")
     void appointmentCreatedWithValidData() {
         Patient patient = Patient.of("ID-010", "Test Patient", LocalDate.of(2000, 6, 15));
-        Doctor doctor = Doctor.of("DOC-010", "Test Doctor", "NEUROLOGY");
+        Doctor doctor = Doctor.of("DOC-010", "Test Doctor", Specialization.NEUROLOGY);
         Appointment appointment = new Appointment(
                 patient, doctor,
                 LocalDate.of(2026, 12, 1),
                 LocalTime.of(9, 0),
                 LocalTime.of(9, 30),
-                "SCHEDULED"
+                AppointmentStatus.SCHEDULED
         );
         assertNotNull(appointment);
-        assertEquals("SCHEDULED", appointment.getStatus());
+        assertEquals(AppointmentStatus.SCHEDULED, appointment.getStatus());
     }
 
     @Test
     @DisplayName("MedicalRecord is created with valid data")
     void medicalRecordCreatedWithValidData() {
         Patient patient = Patient.of("ID-020", "Record Patient", LocalDate.of(1985, 3, 20));
-        Doctor doctor = Doctor.of("DOC-020", "Record Doctor", "DENTISTRY");
+        Doctor doctor = Doctor.of("DOC-020", "Record Doctor", Specialization.DENTISTRY);
         Appointment appointment = new Appointment(
                 patient, doctor,
                 LocalDate.of(2026, 11, 1),
                 LocalTime.of(14, 0),
                 LocalTime.of(14, 45),
-                "COMPLETED"
+                AppointmentStatus.COMPLETED
         );
         MedicalRecord record = new MedicalRecord("REC-001", appointment, "Routine checkup", 200.0);
         assertNotNull(record);
-        assertEquals("REC-001", record.getRecordId());
-        assertEquals(200.0, record.getTreatmentCost());
+        assertEquals("REC-001", record.recordId());
+        assertEquals(200.0, record.treatmentCost());
     }
 
     @Test
@@ -117,13 +119,13 @@ class ClinicTest {
     @DisplayName("durationMinutes calculates correct appointment duration")
     void durationMinutesCalculatesCorrectly() {
         Patient patient = Patient.of("ID-050", "Duration Test", LocalDate.of(1990, 1, 1));
-        Doctor doctor = Doctor.of("DOC-050", "Duration Doc", "PEDIATRICS");
+        Doctor doctor = Doctor.of("DOC-050", "Duration Doc", Specialization.PEDIATRICS);
         Appointment appointment = new Appointment(
                 patient, doctor,
                 LocalDate.of(2026, 12, 1),
                 LocalTime.of(10, 0),
                 LocalTime.of(10, 45),
-                "SCHEDULED"
+                AppointmentStatus.SCHEDULED
         );
         assertEquals(45, ClinicUtils.durationMinutes(appointment));
     }

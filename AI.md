@@ -1,6 +1,2 @@
-Під час виконання лабораторної роботи використовував ChatGPT для генерації класів читання CSV-файлів, власного виключення, логування через SLF4J та модульних тестів JUnit 5.
-Ключовий промпт був таким: "Реалізуй читання Patient і Doctor з CSV-файлів із обробкою помилок через власне виключення InvalidDataException, логуванням SLF4J та тестами JUnit 5".
-ШІ помилково успадкував `InvalidDataException` від `RuntimeException` замість `Exception` і при перехопленні `DateTimeParseException` та `IllegalArgumentException` не передавав першопричину (`cause`) у конструктор виключення.
-Крім того, у згенерованих тестах `ClinicTest` він напряму читав файл `data/patients.csv`, хоча за умовою завдання тести не повинні залежати від файлів у директорії `data/`.
-Я помітив це під час звірки коду з вимогами, тому власноруч зробив `InvalidDataException` checked-виключенням, додав передачу `cause` у `PatientLoader` та `DoctorLoader`, а в тестах замінив звернення до `data/` на тимчасовий файл через `Files.createTempFile`.
-Після ручних виправлень я перевірив проходження всіх тестів і роботу програми через `./gradlew test` та `./gradlew run`.
+Під час виконання лабораторної роботи №4 використовувався AI-асистент (Antigravity) для реалізації `GenericRepository<T>`, інтерфейсу `IdentityExtractor<T>`, виключення `DuplicateIdentityException`, бенчмарку `SearchBenchmark`, модульних тестів та оновлення `Main`.
+Роботу всіх змін перевірено запусками `./gradlew test run --no-daemon` та `SearchBenchmark`.

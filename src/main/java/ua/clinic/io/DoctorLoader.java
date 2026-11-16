@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ua.clinic.exception.InvalidDataException;
 import ua.clinic.model.Doctor;
+import ua.clinic.model.Specialization;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class DoctorLoader {
                 try {
                     Doctor doctor = parseLine(line, lineNumber);
                     doctors.add(doctor);
-                    log.info("Line {}: loaded doctor [{}]", lineNumber, doctor.getLicenseNumber());
+                    log.info("Line {}: loaded doctor [{}]", lineNumber, doctor.licenseNumber());
                 } catch (InvalidDataException e) {
                     log.warn("Line {}: skipped — {}", lineNumber, e.getMessage());
                 }
@@ -67,7 +68,11 @@ public class DoctorLoader {
         String specialization = parts[2].trim();
 
         try {
-            return Doctor.of(licenseNumber, name, specialization);
+            if (specialization.isBlank()) {
+                throw new IllegalArgumentException("specialization must not be blank");
+            }
+            Specialization spec = Specialization.valueOf(specialization.toUpperCase());
+            return Doctor.of(licenseNumber, name, spec);
         } catch (IllegalArgumentException e) {
             throw new InvalidDataException(
                     "line " + lineNumber + ": " + e.getMessage(), e);
