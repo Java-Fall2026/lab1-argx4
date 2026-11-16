@@ -1,22 +1,21 @@
 package ua.clinic.model;
 
-import ua.common.BaseEntity;
 import ua.clinic.util.ClinicUtils;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
 
-public class Appointment extends BaseEntity {
+public class Appointment {
     private final Patient patient;
     private final Doctor doctor;
     private final LocalDate appointmentDate;
     private final LocalTime startTime;
     private final LocalTime endTime;
-    private String status;
+    private AppointmentStatus status;
 
-    public Appointment(Patient patient, Doctor doctor, LocalDate appointmentDate, LocalTime startTime, LocalTime endTime, String status) {
-        super();
+    public Appointment(Patient patient, Doctor doctor, LocalDate appointmentDate, LocalTime startTime,
+            LocalTime endTime, AppointmentStatus status) {
         ClinicUtils.validateNotNull(patient, "patient");
         ClinicUtils.validateNotNull(doctor, "doctor");
         ClinicUtils.validateNotNull(appointmentDate, "appointmentDate");
@@ -30,10 +29,9 @@ public class Appointment extends BaseEntity {
         setStatus(status);
     }
 
-    public final void setStatus(String status) {
-        String normalizedStatus = ClinicUtils.normalizeString(status);
-        ClinicUtils.validateStatus(normalizedStatus);
-        this.status = normalizedStatus;
+    public final void setStatus(AppointmentStatus status) {
+        ClinicUtils.validateNotNull(status, "status");
+        this.status = status;
     }
 
     public Patient getPatient() {
@@ -56,14 +54,16 @@ public class Appointment extends BaseEntity {
         return endTime;
     }
 
-    public String getStatus() {
+    public AppointmentStatus getStatus() {
         return status;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Appointment that = (Appointment) o;
         return Objects.equals(doctor, that.doctor) &&
                 Objects.equals(appointmentDate, that.appointmentDate) &&
@@ -83,8 +83,7 @@ public class Appointment extends BaseEntity {
                 ", appointmentDate=" + appointmentDate +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime +
-                ", status='" + status + '\'' +
-                ", createdAt=" + createdAt +
+                ", status=" + status +
                 '}';
     }
 }
