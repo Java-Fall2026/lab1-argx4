@@ -9,6 +9,10 @@ java {
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
 application {
     // <-- впишіть свій пакет, напр. 'ua.hotel.Main'
     mainClass = 'ua.clinic.Main'
@@ -32,6 +36,12 @@ tasks.withType(JavaExec).configureEach {
         '-Dsun.stdout.encoding=UTF-8',
         '-Dsun.stderr.encoding=UTF-8'
     ]
+}
+
+// --- lab3: logging ---
+dependencies {
+    implementation     'org.slf4j:slf4j-api:2.0.16'
+    runtimeOnly        'ch.qos.logback:logback-classic:1.5.12'
 }
 
 // --- lab3: unit tests ---
