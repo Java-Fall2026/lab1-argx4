@@ -5,18 +5,14 @@ import org.slf4j.LoggerFactory;
 import ua.clinic.exception.DuplicateIdentityException;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-/**
- * Generic in-memory repository storing entities of type {@code T} keyed by their unique string identity.
- * Uses {@link LinkedHashMap} for O(1) average lookup while preserving insertion order.
- *
- * @param <T> the entity type stored in this repository
- */
 public class GenericRepository<T> {
 
     private static final Logger log = LoggerFactory.getLogger(GenericRepository.class);
@@ -25,12 +21,6 @@ public class GenericRepository<T> {
     private final IdentityExtractor<T> extractor;
     private final Map<String, T> storage = new LinkedHashMap<>();
 
-    /**
-     * Creates a new repository for the specified entity type and identity extractor.
-     *
-     * @param type      runtime class of the stored entities
-     * @param extractor lambda or function extracting a unique identity from an entity
-     */
     public GenericRepository(Class<T> type, IdentityExtractor<T> extractor) {
         if (type == null) {
             log.error("Repository type must not be null");
@@ -44,13 +34,6 @@ public class GenericRepository<T> {
         this.extractor = extractor;
     }
 
-    /**
-     * Adds an item to the repository.
-     *
-     * @param item the item to add
-     * @throws IllegalArgumentException   if {@code item} is null or its identity is null/blank
-     * @throws DuplicateIdentityException if an item with the same identity already exists
-     */
     public void add(T item) {
         String identity = extractValidIdentity(item);
         if (storage.containsKey(identity)) {
@@ -62,13 +45,6 @@ public class GenericRepository<T> {
         log.info("Added {} with identity '{}'", type.getSimpleName(), identity);
     }
 
-    /**
-     * Adds an item to the repository only if its identity is not already present.
-     *
-     * @param item the item to add
-     * @return {@code true} if the item was added, {@code false} if an item with the same identity already exists
-     * @throws IllegalArgumentException if {@code item} is null or its identity is null/blank
-     */
     public boolean addIfAbsent(T item) {
         String identity = extractValidIdentity(item);
         if (storage.containsKey(identity)) {
@@ -80,13 +56,6 @@ public class GenericRepository<T> {
         return true;
     }
 
-    /**
-     * Adds all items from the given collection to the repository.
-     *
-     * @param items collection of items to add
-     * @throws IllegalArgumentException   if {@code items} is null or contains invalid items
-     * @throws DuplicateIdentityException if any item has a duplicate identity
-     */
     public void addAll(Collection<? extends T> items) {
         if (items == null) {
             log.error("Cannot add null collection to {} repository", type.getSimpleName());
@@ -97,12 +66,6 @@ public class GenericRepository<T> {
         }
     }
 
-    /**
-     * Removes an item by its identity.
-     *
-     * @param identity the identity of the item to remove
-     * @return {@code true} if the item existed and was removed, {@code false} otherwise
-     */
     public boolean removeByIdentity(String identity) {
         if (identity == null || identity.isBlank()) {
             log.warn("Cannot remove {} with null or blank identity", type.getSimpleName());
@@ -117,12 +80,6 @@ public class GenericRepository<T> {
         return true;
     }
 
-    /**
-     * Finds an item by its identity.
-     *
-     * @param identity the identity to look up
-     * @return an {@link Optional} containing the found item, or empty if not found
-     */
     public Optional<T> findByIdentity(String identity) {
         if (identity == null || identity.isBlank()) {
             log.warn("Cannot search {} with null or blank identity", type.getSimpleName());
@@ -137,23 +94,10 @@ public class GenericRepository<T> {
         return Optional.of(found);
     }
 
-    /**
-     * Returns an unmodifiable snapshot list of all stored items in insertion order.
-     * Modifications to the returned list cannot affect repository state.
-     *
-     * @return unmodifiable list of stored items
-     */
     public List<T> findAll() {
         return List.copyOf(storage.values());
     }
 
-    /**
-     * Returns an unmodifiable list of stored items matching the given predicate.
-     *
-     * @param filter predicate used to filter stored items
-     * @return unmodifiable list of matching items
-     * @throws IllegalArgumentException if {@code filter} is null
-     */
     public List<T> findAll(Predicate<? super T> filter) {
         if (filter == null) {
             log.error("Filter predicate must not be null for {} repository", type.getSimpleName());
@@ -164,11 +108,33 @@ public class GenericRepository<T> {
                 .toList();
     }
 
-    /**
-     * Returns the number of items currently stored in the repository.
-     *
-     * @return repository size
-     */
+    public List<T> findAllSorted(Comparator<T> comparator) {
+        if (comparator == null) {
+            log.error("Comparator must not be null for {} repository", type.getSimpleName());
+            throw new IllegalArgumentException("comparator must not be null");
+        }
+        return storage.values().stream()
+                .sorted(comparator)
+                .toList();
+    }
+
+    public List<T> findAllSortedByIdentity(SortOrder order) {
+        if (order == null) {
+            log.error("SortOrder must not be null for {} repository", type.getSimpleName());
+            throw new IllegalArgumentException("order must not be null");
+        }
+        List<T> sorted = storage.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(order.comparator()))
+                .map(Map.Entry::getValue)
+                .toList();
+        log.info("Sorted {} by identity ({}): returned {} elements", type.getSimpleName(), order, sorted.size());
+        return sorted;
+    }
+
+    public Stream<T> stream() {
+        return storage.values().stream();
+    }
+
     public int size() {
         return storage.size();
     }
